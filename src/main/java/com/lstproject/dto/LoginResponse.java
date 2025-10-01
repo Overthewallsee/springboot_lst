@@ -7,4 +7,5 @@ public class LoginResponse {
     private String token;
     private String message;
     private boolean success;
+    private UserDTO user;
 }

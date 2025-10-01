@@ -1,11 +1,15 @@
 package com.lstproject.service;
 
+import com.lstproject.convert.UserMapper;
 import com.lstproject.dto.LoginRequest;
 import com.lstproject.dto.LoginResponse;
+import com.lstproject.dto.UserDTO;
 import com.lstproject.entity.User;
 import com.lstproject.exception.RateLimitExceededException;
 import com.lstproject.repository.UserRepository;
+import com.lstproject.util.CryptoJsAesDecryptor;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
@@ -17,17 +21,20 @@ public class AuthService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final RateLimitService rateLimitService;
-    
+
+    @Value("${Crypto.secretKey:LST_LOGIN_SECRET_KEY_2024}")
+    private String secret;
     public LoginResponse login(LoginRequest request, String clientIp) {
         // 检查是否被限流
         rateLimitService.isRateLimited(clientIp);
         
         // 查找用户
-        User user = userRepository.findByUsername(request.getUsername())
-                .orElseThrow(() -> new RuntimeException("Invalid username or password"));
+        User user = userRepository.findByPhoneNumber(request.getPhoneNumber())
+                .orElseThrow(() -> new RuntimeException("Invalid phoneNumber or password"));
         
         // 验证密码
-        if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
+        String decryptPwd = CryptoJsAesDecryptor.decrypt(request.getPassword(), secret);
+        if (!passwordEncoder.matches(decryptPwd, user.getPassword())) {
             rateLimitService.incrementAttempts(clientIp);
             throw new RuntimeException("Invalid username or password");
         }
@@ -48,7 +55,8 @@ public class AuthService {
         response.setSuccess(true);
         response.setMessage("Login successful");
         response.setToken(token);
-        
+        UserDTO userDTO = UserMapper.INSTANCE.toDTO(user);
+        response.setUser(userDTO);
         return response;
     }
 
@@ -71,7 +79,8 @@ public class AuthService {
         // 创建新用户
         User user = new User();
         user.setUsername(request.getUsername());
-        user.setPassword(passwordEncoder.encode(request.getPassword()));
+        String decryptPwd = CryptoJsAesDecryptor.decrypt(request.getPassword(), secret);
+        user.setPassword(passwordEncoder.encode(decryptPwd));
         user.setPhoneNumber(request.getPhoneNumber());
         user.setCreatedAt(LocalDateTime.now());
         user.setLastLoginAt(LocalDateTime.now());
