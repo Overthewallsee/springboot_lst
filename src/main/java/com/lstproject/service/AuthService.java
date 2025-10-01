@@ -3,6 +3,7 @@ package com.lstproject.service;
 import com.lstproject.dto.LoginRequest;
 import com.lstproject.dto.LoginResponse;
 import com.lstproject.entity.User;
+import com.lstproject.exception.RateLimitExceededException;
 import com.lstproject.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -19,9 +20,7 @@ public class AuthService {
     
     public LoginResponse login(LoginRequest request, String clientIp) {
         // 检查是否被限流
-        if (rateLimitService.isRateLimited(clientIp)) {
-            throw new RuntimeException("Too many login attempts. Please try again later.");
-        }
+        rateLimitService.isRateLimited(clientIp);
         
         // 查找用户
         User user = userRepository.findByUsername(request.getUsername())
@@ -34,8 +33,10 @@ public class AuthService {
         }
         
         // 重置限流计数
-        rateLimitService.resetAttempts(clientIp);
-        
+//        rateLimitService.resetAttempts(clientIp);
+
+
+
         // 更新最后登录时间
         user.setLastLoginAt(LocalDateTime.now());
         userRepository.save(user);
@@ -50,4 +51,45 @@ public class AuthService {
         
         return response;
     }
+
+    public LoginResponse register(LoginRequest request, String clientIp) {
+        // 检查是否被限流
+        rateLimitService.isRateLimited(clientIp);
+
+        // 检查用户名是否已存在
+        if (userRepository.findByUsername(request.getUsername()).isPresent()) {
+            rateLimitService.incrementAttempts(clientIp);
+            throw new RuntimeException("Username already exists");
+        }
+
+        // 检查手机号是否已存在
+        if (userRepository.findByPhoneNumber(request.getPhoneNumber()).isPresent()) {
+            rateLimitService.incrementAttempts(clientIp);
+            throw new RuntimeException("Phone number already registered");
+        }
+
+        // 创建新用户
+        User user = new User();
+        user.setUsername(request.getUsername());
+        user.setPassword(passwordEncoder.encode(request.getPassword()));
+        user.setPhoneNumber(request.getPhoneNumber());
+        user.setCreatedAt(LocalDateTime.now());
+        user.setLastLoginAt(LocalDateTime.now());
+
+        userRepository.save(user);
+
+        // 重置限流计数
+        rateLimitService.resetAttempts(clientIp);
+
+        // 生成token
+        String token = UUID.randomUUID().toString();
+
+        LoginResponse response = new LoginResponse();
+        response.setSuccess(true);
+        response.setMessage("Registration successful");
+        response.setToken(token);
+
+        return response;
+    }
+
 }
