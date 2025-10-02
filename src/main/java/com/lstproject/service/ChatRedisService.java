@@ -5,7 +5,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
-import java.util.HashSet;
 import java.util.Set;
 
 @Service
@@ -95,13 +94,27 @@ public class ChatRedisService {
     }
     
     /**
-     * 检查用户是否已在聊天室中
+     * 检查用户是否在聊天室中
      * @param roomId 聊天室ID
      * @param username 用户名
-     * @return 用户是否已在聊天室中
+     * @return 用户是否在聊天室中
      */
     public boolean isUserInRoom(String roomId, String username) {
         String key = CHAT_ROOM_USERS_PREFIX + roomId;
         return Boolean.TRUE.equals(redisTemplate.opsForSet().isMember(key, username));
+    }
+    
+    /**
+     * 删除聊天室及其用户列表
+     * @param roomId 聊天室ID
+     */
+    public void deleteChatRoom(String roomId) {
+        // 删除聊天室信息
+        String roomKey = CHAT_ROOM_PREFIX + roomId;
+        redisTemplate.delete(roomKey);
+        
+        // 删除聊天室用户列表
+        String usersKey = CHAT_ROOM_USERS_PREFIX + roomId;
+        redisTemplate.delete(usersKey);
     }
 }

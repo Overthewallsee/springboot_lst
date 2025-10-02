@@ -1,12 +1,10 @@
 package com.lstproject.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.lstproject.dto.ChatMessage;
-import com.lstproject.dto.LoginRequest;
-import com.lstproject.dto.LoginResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -14,6 +12,7 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 @RestController
@@ -36,7 +35,10 @@ public class ChatService {
                 clientHandler = addClient(sender, roomId);
             }
         }
-        clientHandler.sendMessage(message);
+        // 普通聊天消息，通过Kafka发送
+        String msg = sender + ": " + message;
+        ChatServer.sendChatMessage(msg, roomId);
+//        clientHandler.sendMessage(message);
     }
 
     private ClientHandler addClient(String sender, String roomId) throws IOException {
@@ -49,8 +51,15 @@ public class ChatService {
 
     // 在ChatService接口或实现类中添加以下方法
     public boolean joinRoom(String roomId, String roomPassword, String username) {
-        // 验证聊天室密码（示例中假设密码验证通过）
-        // 实际应用中应该有真实的密码验证逻辑
+        // 验证聊天室是否存在
+        if (!ChatServer.isRoomExists(roomId)) {
+            throw new RuntimeException("聊天室不存在");
+        }
+        
+        // 验证聊天室密码
+        if (!ChatServer.verifyRoomPassword(roomId, roomPassword)) {
+            throw new RuntimeException("聊天室密码错误");
+        }
         
         // 检查聊天室中是否已存在同名用户
         Map<String, ClientHandler> clientMap = ChatServer.chatRooms.getOrDefault(roomId, new ConcurrentHashMap<>());
@@ -61,9 +70,24 @@ public class ChatService {
         }
         
         // 用户名未重复，允许加入
-        // 注意：实际的客户端连接和加入操作在ClientHandler中处理
-        // 这里只需要验证用户是否可以加入指定的聊天室
-        return true; // 加入成功返回true，失败返回false
+        // 将用户添加到聊天室的用户列表中
+        ChatServer.staticChatRedisService.addUserToRoom(roomId, username);
+        
+        // 通过WebSocket通知所有客户端有新用户加入
+        try {
+            ObjectMapper objectMapper = new ObjectMapper();
+            ObjectNode message = objectMapper.createObjectNode();
+            message.put("type", "user_joined");
+            message.put("username", username);
+            message.put("roomId", roomId);
+            message.put("message", username + " 加入了聊天室");
+            ChatWebSocketHandler.broadcastMessage(message.toString());
+        } catch (Exception e) {
+            System.err.println("发送WebSocket消息失败: " + e.getMessage());
+        }
+        
+        // 加入成功返回true
+        return true;
     }
     
     /**
@@ -76,5 +100,26 @@ public class ChatService {
     public boolean createRoom(String roomId, String roomPassword, String username) {
         // 调用ChatServer创建聊天室
         return ChatServer.createChatRoom(roomId, roomPassword);
+    }
+    
+    /**
+     * 用户离开聊天室
+     * @param roomId 聊天室ID
+     * @param username 用户名
+     * @return 是否成功离开
+     */
+    public boolean leaveRoom(String roomId, String username) {
+        // 从聊天室中移除用户
+        ChatServer.removeClient(roomId, username);
+        
+        // 检查聊天室是否为空
+        Set<String> users = ChatServer.staticChatRedisService.getRoomUsers(roomId);
+        if (users == null || users.isEmpty()) {
+            // 如果聊天室为空，删除聊天室
+            ChatServer.staticChatRedisService.deleteChatRoom(roomId);
+            ChatServer.chatRooms.remove(roomId);
+        }
+        
+        return true;
     }
 }

@@ -18,7 +18,7 @@ public class CreateRoomRequest {
      * 聊天室密码
      */
     @NotBlank(message = "聊天室密码不能为空")
-    private String roomPassword;
+    private String password;
     
     /**
      * 用户名
@@ -29,9 +29,9 @@ public class CreateRoomRequest {
     // Constructors
     public CreateRoomRequest() {}
     
-    public CreateRoomRequest(String roomId, String roomPassword, String username) {
+    public CreateRoomRequest(String roomId, String password, String username) {
         this.roomId = roomId;
-        this.roomPassword = roomPassword;
+        this.password = password;
         this.username = username;
     }
     
@@ -43,15 +43,15 @@ public class CreateRoomRequest {
     public void setRoomId(String roomId) {
         this.roomId = roomId;
     }
-    
-    public String getRoomPassword() {
-        return roomPassword;
+
+    public String getPassword() {
+        return password;
     }
-    
-    public void setRoomPassword(String roomPassword) {
-        this.roomPassword = roomPassword;
+
+    public void setPassword(String password) {
+        this.password = password;
     }
-    
+
     public String getUsername() {
         return username;
     }

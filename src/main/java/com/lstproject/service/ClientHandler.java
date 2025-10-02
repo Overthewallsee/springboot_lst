@@ -90,8 +90,9 @@ class ClientHandler implements Runnable {
             if (message.startsWith("/")) {
                 handleCommand(message);
             } else {
-                // 普通聊天消息
-                ChatServer.broadcastMessage(roomId + " := " + clientName + ": " + message, clientName);
+                // 普通聊天消息，通过Kafka发送
+                String chatMessage = clientName + ": " + message;
+                ChatServer.sendChatMessage(chatMessage, roomId);
             }
         }
     }

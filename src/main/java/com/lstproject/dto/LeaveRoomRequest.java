@@ -3,10 +3,10 @@ package com.lstproject.dto;
 import javax.validation.constraints.NotBlank;
 
 /**
- * 聊天室加入请求DTO
- * 用于接收用户加入聊天室时所需的参数
+ * 离开聊天室请求DTO
+ * 用于接收用户离开聊天室时所需的参数
  */
-public class ChatJoinRequest {
+public class LeaveRoomRequest {
     
     /**
      * 聊天室ID
@@ -15,23 +15,16 @@ public class ChatJoinRequest {
     private String roomId;
     
     /**
-     * 聊天室密码
-     */
-    @NotBlank(message = "聊天室密码不能为空")
-    private String password;
-    
-    /**
      * 用户名
      */
     @NotBlank(message = "用户名不能为空")
     private String username;
     
     // Constructors
-    public ChatJoinRequest() {}
+    public LeaveRoomRequest() {}
     
-    public ChatJoinRequest(String roomId, String password, String username) {
+    public LeaveRoomRequest(String roomId, String username) {
         this.roomId = roomId;
-        this.password = password;
         this.username = username;
     }
     
@@ -43,15 +36,7 @@ public class ChatJoinRequest {
     public void setRoomId(String roomId) {
         this.roomId = roomId;
     }
-
-    public String getPassword() {
-        return password;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
-    }
-
+    
     public String getUsername() {
         return username;
     }

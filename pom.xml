@@ -35,6 +35,10 @@
   <properties>
             
     <java.version>11</java.version>
+    <!-- 添加字符编码配置 -->
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+    <maven.compiler.encoding>UTF-8</maven.compiler.encoding>
         
   </properties>
       
@@ -147,7 +151,45 @@
       <optional>true</optional>
               
     </dependency>
-        <dependency>
+    
+    <!-- WebSocket -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-websocket</artifactId>
+    </dependency>
+    
+    <!-- Jackson for JSON processing -->
+    <dependency>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-databind</artifactId>
+    </dependency>
+    
+    <!-- JWT -->
+    <dependency>
+      <groupId>io.jsonwebtoken</groupId>
+      <artifactId>jjwt-api</artifactId>
+      <version>0.11.5</version>
+    </dependency>
+    <dependency>
+      <groupId>io.jsonwebtoken</groupId>
+      <artifactId>jjwt-impl</artifactId>
+      <version>0.11.5</version>
+      <scope>runtime</scope>
+    </dependency>
+    <dependency>
+      <groupId>io.jsonwebtoken</groupId>
+      <artifactId>jjwt-jackson</artifactId>
+      <version>0.11.5</version>
+      <scope>runtime</scope>
+    </dependency>
+    
+    <!-- JAXB for JWT -->
+    <dependency>
+      <groupId>javax.xml.bind</groupId>
+      <artifactId>jaxb-api</artifactId>
+    </dependency>
+    
+    <dependency>
     <groupId>org.mapstruct</groupId>
     <artifactId>mapstruct</artifactId>
     <version>1.5.2.Final</version>
@@ -163,35 +205,31 @@
       
     
   <build>
-            
     <plugins>
-                  
       <plugin>
-                        
         <groupId>org.springframework.boot</groupId>
-                        
         <artifactId>spring-boot-maven-plugin</artifactId>
-                        
         <configuration>
-                              
           <excludes>
-                                    
             <exclude>
-                                          
               <groupId>org.projectlombok</groupId>
-                                          
               <artifactId>lombok</artifactId>
-                                      
             </exclude>
-                                
           </excludes>
-                          
         </configuration>
-                    
       </plugin>
-              
+      
+      <!-- 添加编译插件以确保正确编码 -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <configuration>
+          <encoding>UTF-8</encoding>
+          <source>11</source>
+          <target>11</target>
+        </configuration>
+      </plugin>
     </plugins>
-        
   </build>
 
 </project>

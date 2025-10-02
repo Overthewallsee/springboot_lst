@@ -36,15 +36,25 @@ spring:
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      
+  # 添加字符编码配置
+  http:
+    encoding:
+      charset: UTF-8
+      enabled: true
+      force: true
 
 # Rate limiting configuration
 rate-limit:
   max-attempts: 1
   window-seconds: 5
 
+# JWT configuration (64+ characters for HS512)
+jwt:
+  secret: LST_VERY_LONG_SECURE_SECRET_KEY_FOR_HS512_ALGORITHM_2024_10_02
+  expiration: 86400000
+
 Crypto:
   secretKey: LST_LOGIN_SECRET_KEY_2024
 socket:
   port: 8889
-
-

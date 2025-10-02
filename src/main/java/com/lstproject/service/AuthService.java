@@ -8,6 +8,7 @@ import com.lstproject.entity.User;
 import com.lstproject.exception.RateLimitExceededException;
 import com.lstproject.repository.UserRepository;
 import com.lstproject.util.CryptoJsAesDecryptor;
+import com.lstproject.util.JwtUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -21,6 +22,7 @@ public class AuthService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final RateLimitService rateLimitService;
+    private final JwtUtil jwtUtil;
 
     @Value("${Crypto.secretKey:LST_LOGIN_SECRET_KEY_2024}")
     private String secret;
@@ -42,14 +44,12 @@ public class AuthService {
         // 重置限流计数
 //        rateLimitService.resetAttempts(clientIp);
 
-
-
         // 更新最后登录时间
         user.setLastLoginAt(LocalDateTime.now());
         userRepository.save(user);
         
-        // 生成token (简化实现)
-        String token = UUID.randomUUID().toString();
+        // 生成JWT token
+        String token = jwtUtil.generateToken(user.getUsername(), user.getPhoneNumber());
         
         LoginResponse response = new LoginResponse();
         response.setSuccess(true);
@@ -90,8 +90,8 @@ public class AuthService {
         // 重置限流计数
         rateLimitService.resetAttempts(clientIp);
 
-        // 生成token
-        String token = UUID.randomUUID().toString();
+        // 生成JWT token
+        String token = jwtUtil.generateToken(user.getUsername(), user.getPhoneNumber());
 
         LoginResponse response = new LoginResponse();
         response.setSuccess(true);
