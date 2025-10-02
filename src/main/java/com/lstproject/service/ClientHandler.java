@@ -42,16 +42,43 @@ class ClientHandler implements Runnable {
 
     // 用户认证
     private void authenticateUser() throws IOException {
-        sendMessage("欢迎来到聊天室！请输入您的昵称:");
-        this.clientName = reader.readLine();
+        sendMessage("欢迎来到聊天室！请输入聊天室ID:");
+        this.roomId = reader.readLine();
         
-        if (clientName != null && !clientName.trim().isEmpty()) {
-            if (!ChatServer.chatRooms.containsKey(roomId)) {
-                authenticated = true;
-                ChatServer.addClient(roomId, clientName, this);
-                sendMessage("登录成功！输入 /help 查看帮助，输入 /quit 退出聊天室");
+        if (roomId != null && !roomId.trim().isEmpty()) {
+            // 检查聊天室是否存在，如果不存在则提示输入密码创建
+            if (!ChatServer.isRoomExists(roomId)) {
+                sendMessage("聊天室不存在，请输入密码创建聊天室:");
+                String roomPassword = reader.readLine();
+                if (ChatServer.createChatRoom(roomId, roomPassword)) {
+                    sendMessage("聊天室创建成功！");
+                } else {
+                    sendMessage("聊天室创建失败，可能已存在同名聊天室");
+                    return;
+                }
             } else {
-                sendMessage("昵称已存在，请重新连接并选择其他昵称");
+                // 聊天室存在，需要验证密码
+                sendMessage("请输入聊天室密码:");
+                String inputPassword = reader.readLine();
+                
+                if (!ChatServer.verifyRoomPassword(roomId, inputPassword)) {
+                    sendMessage("密码错误，无法加入聊天室");
+                    return;
+                }
+            }
+            
+            sendMessage("请输入您的昵称:");
+            this.clientName = reader.readLine();
+            
+            if (clientName != null && !clientName.trim().isEmpty()) {
+                // 检查用户是否已在聊天室中
+                if (!ChatServer.staticChatRedisService.isUserInRoom(roomId, clientName)) {
+                    authenticated = true;
+                    ChatServer.addClient(roomId, clientName, this);
+                    sendMessage("登录成功！输入 /help 查看帮助，输入 /quit 退出聊天室");
+                } else {
+                    sendMessage("该昵称已在聊天室中，请选择其他昵称");
+                }
             }
         }
     }
@@ -64,7 +91,7 @@ class ClientHandler implements Runnable {
                 handleCommand(message);
             } else {
                 // 普通聊天消息
-                ChatServer.broadcastMessage(clientName + ": " + message, clientName);
+                ChatServer.broadcastMessage(roomId + " := " + clientName + ": " + message, clientName);
             }
         }
     }
@@ -74,8 +101,7 @@ class ClientHandler implements Runnable {
         if (command.equals("/quit")) {
             sendMessage("再见！");
         } else if (command.equals("/users")) {
-            String[] split = command.split(" := ", 3);
-            sendMessage(ChatServer.getOnlineUsers(split[0]));
+            sendMessage(ChatServer.getOnlineUsers(roomId));
         } else if (command.equals("/help")) {
             sendMessage("可用命令:");
             sendMessage("/users - 查看在线用户");
