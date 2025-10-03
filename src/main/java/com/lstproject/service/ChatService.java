@@ -63,10 +63,10 @@ public class ChatService {
         }
         
         // 检查聊天室中是否已存在同名用户
-        Map<String, ClientHandler> clientMap = ChatServer.chatRooms.getOrDefault(roomId, new ConcurrentHashMap<>());
-        
+//        Map<String, ClientHandler> clientMap = ChatServer.chatRooms.getOrDefault(roomId, new ConcurrentHashMap<>());
+
         // 检查用户名是否已存在
-        if (clientMap.containsKey(username)) {
+        if (ChatServer.staticChatRedisService.isUserInRoom(roomId, username)) {
             return false; // 用户名已存在，加入失败
         }
         
@@ -125,12 +125,13 @@ public class ChatService {
     }
 
     public List<UserInfoDTO> queryUserList(String roomId) {
-        Map<String, ClientHandler> userMap = ChatServer.chatRooms.get(roomId);
+        Set<String> roomUsers = ChatServer.staticChatRedisService.getRoomUsers(roomId);
+//        Map<String, ClientHandler> userMap = ChatServer.chatRooms.get(roomId);
         List<UserInfoDTO> userInfoList = new ArrayList<>();
-        if (userMap == null || userMap.isEmpty()) {
+        if (roomUsers == null || roomUsers.isEmpty()) {
             return userInfoList;
         }
-        userMap.keySet().forEach(username -> {
+        roomUsers.forEach(username -> {
             UserInfoDTO userInfoDTO = new UserInfoDTO();
             userInfoDTO.setName(username);
             userInfoDTO.setColor(getRandomColor());
