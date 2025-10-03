@@ -3,6 +3,8 @@ package com.lstproject.service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.lstproject.dto.ChatMessage;
+import com.lstproject.dto.UserDTO;
+import com.lstproject.dto.UserInfoDTO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -11,8 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 @RestController
@@ -122,4 +123,31 @@ public class ChatService {
         
         return true;
     }
+
+    public List<UserInfoDTO> queryUserList(String roomId) {
+        Map<String, ClientHandler> userMap = ChatServer.chatRooms.get(roomId);
+        List<UserInfoDTO> userInfoList = new ArrayList<>();
+        if (userMap == null || userMap.isEmpty()) {
+            return userInfoList;
+        }
+        userMap.keySet().forEach(username -> {
+            UserInfoDTO userInfoDTO = new UserInfoDTO();
+            userInfoDTO.setName(username);
+            userInfoDTO.setColor(getRandomColor());
+            userInfoDTO.setId(UUID.randomUUID().toString());
+            userInfoList.add(userInfoDTO);
+        });
+        return userInfoList;
+    }
+
+    private String getRandomColor() {
+        String[] colors = {
+                "#FF6B6B", "#4ECDC4", "#45B7D1", "#96CEB4",
+                "#FFEAA7", "#DDA0DD", "#98D8C8", "#F7DC6F",
+                "#BB8FCE", "#85C1E9", "#F8C471", "#82E0AA"
+        };
+        double floor = Math.floor(Math.random() * colors.length);
+        return colors[(int) floor];
+    }
+  
 }

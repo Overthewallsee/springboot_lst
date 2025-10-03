@@ -45,17 +45,14 @@ public class ChatController {
                     joinRequest.getPassword(), // 使用 getPassword() 而不是 getRoomPassword()
                     joinRequest.getUsername()
             );
-
             if (success) {
-                return ResponseEntity.ok(new CreateRoomResponse(joinRequest.getRoomId(), joinRequest.getUsername(), "成功加入聊天室"));
-
+                return ResponseEntity.ok(new CreateRoomResponse(chatService.queryUserList(joinRequest.getRoomId()), "成功加入聊天室"));
             } else {
-                return ResponseEntity.badRequest().body( new CreateRoomResponse(joinRequest.getRoomId(), joinRequest.getUsername(), "加入聊天室失败：用户已存在"));
+                return ResponseEntity.badRequest().body( new CreateRoomResponse(null, "加入聊天室失败：用户已存在"));
             }
         } catch (Exception e) {
             logger.error("加入聊天室失败", e);
-            return ResponseEntity.badRequest().body( new CreateRoomResponse(joinRequest.getRoomId(), joinRequest.getUsername(), "加入聊天室失败：" + e.getMessage()));
-
+            return ResponseEntity.badRequest().body( new CreateRoomResponse(null, "加入聊天室失败：" + e.getMessage()));
         }
     }
     
@@ -81,16 +78,16 @@ public class ChatController {
                         createRoomRequest.getUsername()
                 );
                 if (isSuccess) {
-                    return ResponseEntity.ok(new CreateRoomResponse(createRoomRequest.getRoomId(), createRoomRequest.getUsername(), "创建聊天室成功"));
+                    return ResponseEntity.ok(new CreateRoomResponse(chatService.queryUserList(createRoomRequest.getRoomId()), "创建聊天室成功"));
                 } else {
-                    return ResponseEntity.badRequest().body( new CreateRoomResponse(createRoomRequest.getRoomId(), createRoomRequest.getUsername(), "创建聊天室失败：加入聊天室失败"));
+                    return ResponseEntity.badRequest().body( new CreateRoomResponse(null, "创建聊天室失败：加入聊天室失败"));
                 }
             } else {
-                return ResponseEntity.badRequest().body( new CreateRoomResponse(createRoomRequest.getRoomId(), createRoomRequest.getUsername(), "创建聊天室失败：聊天室已存在"));
+                return ResponseEntity.badRequest().body( new CreateRoomResponse(null, "创建聊天室失败：聊天室已存在"));
             }
         } catch (Exception e) {
             logger.error("创建聊天室失败", e);
-            return ResponseEntity.badRequest().body( new CreateRoomResponse(createRoomRequest.getRoomId(), createRoomRequest.getUsername(), "创建聊天室失败：" + e.getMessage()));
+            return ResponseEntity.badRequest().body( new CreateRoomResponse(null, "创建聊天室失败：" + e.getMessage()));
         }
     }
     
