@@ -8,6 +8,14 @@ public class ChatMessage {
 
     private String message;
 
+    private MessageType type;
+
+    public enum MessageType {
+        CHAT,
+        JOIN,
+        LEAVE
+    }
+
     public String getRoomId() {
         return roomId;
     }

@@ -28,18 +28,27 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             throws ServletException, IOException {
 
         final String requestTokenHeader = request.getHeader("Authorization");
-
-        String username = null;
+        
+        // Also check for token in query parameter for WebSocket connections
         String jwtToken = null;
-
-        // JWT Token is in the form "Bearer token". Remove Bearer word and get only the Token
+        String username = null;
+        
+        // Check Authorization header first
         if (requestTokenHeader != null && requestTokenHeader.startsWith("Bearer ")) {
             jwtToken = requestTokenHeader.substring(7);
             try {
                 username = jwtUtil.extractUsername(jwtToken);
             } catch (Exception e) {
-                e.printStackTrace();
-                System.out.println("Unable to get JWT Token");
+                System.out.println("Unable to get JWT Token from Authorization header");
+            }
+        } 
+        // If no token in header, check query parameter (for WebSocket)
+        else if (request.getParameter("token") != null) {
+            jwtToken = request.getParameter("token");
+            try {
+                username = jwtUtil.extractUsername(jwtToken);
+            } catch (Exception e) {
+                System.out.println("Unable to get JWT Token from query parameter");
             }
         }
 

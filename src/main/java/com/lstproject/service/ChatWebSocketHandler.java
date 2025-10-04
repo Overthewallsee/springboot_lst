@@ -1,6 +1,10 @@
 package com.lstproject.service;
 
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArraySet;
 
@@ -17,10 +21,11 @@ public class ChatWebSocketHandler implements WebSocketHandler {
     
     // 存储所有连接的客户端
     private static final CopyOnWriteArraySet<WebSocketSession> sessions = new CopyOnWriteArraySet<>();
-    
+//    private final ConcurrentHashMap<String, List<WebSocketSession>> roomSessions = new ConcurrentHashMap<>();
     // 存储用户与会话的映射关系
-    private static final ConcurrentHashMap<String, WebSocketSession> userSessions = new ConcurrentHashMap<>();
-    
+    private static final ConcurrentHashMap<String, Map<String, WebSocketSession>> userSessions = new ConcurrentHashMap<>();
+
+
     // JSON处理工具
     private static final ObjectMapper objectMapper = new ObjectMapper();
     
@@ -29,7 +34,8 @@ public class ChatWebSocketHandler implements WebSocketHandler {
         // 添加新连接到会话列表
         sessions.add(session);
         System.out.println("新的WebSocket连接建立: " + session.getId());
-        
+        String roomId = getRoomId(session);
+        userSessions.computeIfAbsent(roomId, k -> new ConcurrentHashMap<>()).put(session.getId(), session);
         // 发送欢迎消息
         ObjectNode welcomeMessage = objectMapper.createObjectNode();
         welcomeMessage.put("type", "system");
@@ -78,7 +84,7 @@ public class ChatWebSocketHandler implements WebSocketHandler {
         String roomId = message.get("roomId").asText();
         
         // 将用户与会话关联
-        userSessions.put(username, session);
+//        userSessions.put(username, session);
         
         // 发送确认消息
         ObjectNode response = objectMapper.createObjectNode();
@@ -123,8 +129,8 @@ public class ChatWebSocketHandler implements WebSocketHandler {
         String username = message.get("username").asText();
         String roomId = message.get("roomId").asText();
         
-        // 移除用户会话关联
-        userSessions.remove(username);
+//        // 移除用户会话关联
+//        userSessions.remove(username);
         
         // 通知其他用户
         ObjectNode broadcast = objectMapper.createObjectNode();
@@ -154,7 +160,11 @@ public class ChatWebSocketHandler implements WebSocketHandler {
      * @param session WebSocket会话
      */
     private void removeUserSession(WebSocketSession session) {
-        userSessions.values().removeIf(s -> s.getId().equals(session.getId()));
+        String roomId = getRoomId(session);
+        userSessions.get(roomId).remove(session.getId());
+        if (userSessions.get(roomId).isEmpty()) {
+            userSessions.remove(roomId);
+        }
     }
     
     @Override
@@ -200,14 +210,30 @@ public class ChatWebSocketHandler implements WebSocketHandler {
      * @param username 用户名
      * @param message 要发送的消息
      */
-    public static void sendMessageToUser(String username, String message) {
-        WebSocketSession session = userSessions.get(username);
-        if (session != null && session.isOpen()) {
-            try {
-                session.sendMessage(new TextMessage(message));
-            } catch (IOException e) {
-                System.err.println("发送消息失败: " + e.getMessage());
+    public static void sendMessageToUser(String roomId, String username, String message) {
+        Map<String, WebSocketSession> roomMap = userSessions.get(roomId);
+        if (roomMap != null) {
+            WebSocketSession session = roomMap.get(username);
+            if (session != null && session.isOpen()) {
+                try {
+                    session.sendMessage(new TextMessage(message));
+                } catch (IOException e) {
+                    System.err.println("发送消息失败: " + e.getMessage());
+                }
             }
         }
+    }
+
+    /**
+     * 从WebSocket会话中提取房间ID
+     * @param session WebSocket会话
+     * @return 房间ID
+     */
+    private String getRoomId(WebSocketSession session) {
+        String uri = session.getUri().getPath();
+        String[] parts = uri.split("/");
+        Arrays.sort(parts, Comparator.reverseOrder()); ;
+        // 默认房间
+        return parts[0];
     }
 }

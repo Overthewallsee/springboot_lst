@@ -74,7 +74,7 @@ class ClientHandler implements Runnable {
                 // 检查用户是否已在聊天室中
                 if (!ChatServer.staticChatRedisService.isUserInRoom(roomId, clientName)) {
                     authenticated = true;
-                    ChatServer.addClient(roomId, clientName, this);
+                    ChatServer.createChatRoom(roomId, clientName);
                     sendMessage("登录成功！输入 /help 查看帮助，输入 /quit 退出聊天室");
                 } else {
                     sendMessage("该昵称已在聊天室中，请选择其他昵称");

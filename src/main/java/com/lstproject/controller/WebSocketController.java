@@ -1,9 +1,6 @@
 package com.lstproject.controller;
 
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -26,4 +23,16 @@ public class WebSocketController {
         response.put("message", "连接成功后可以通过WebSocket发送和接收消息");
         return response;
     }
+
+    @PostMapping("/chat/{roomId}")
+    public Map<String, Object> sendWebSocketInfo(@PathVariable("roomId") String roomId) {
+        Map<String, Object> response = new HashMap<>();
+        response.put("endpoint", "/ws/chat");
+        response.put("protocol", "WebSocket");
+        response.put("status", "available");
+        response.put("message", "连接成功后可以通过WebSocket发送和接收消息");
+        System.out.println(roomId);
+        return response;
+    }
+
 }
