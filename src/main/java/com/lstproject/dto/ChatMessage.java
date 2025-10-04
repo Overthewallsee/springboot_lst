@@ -8,6 +8,10 @@ public class ChatMessage {
 
     private String message;
 
+    private String userName;
+
+    private long timestamp;
+
     private MessageType type;
 
     public enum MessageType {
@@ -38,5 +42,29 @@ public class ChatMessage {
 
     public void setMessage(String message) {
         this.message = message;
+    }
+
+    public MessageType getType() {
+        return type;
+    }
+
+    public void setType(MessageType type) {
+        this.type = type;
+    }
+
+    public String getUserName() {
+        return userName;
+    }
+
+    public void setUserName(String userName) {
+        this.userName = userName;
+    }
+
+    public long getTimestamp() {
+        return timestamp;
+    }
+
+    public void setTimestamp(long timestamp) {
+        this.timestamp = timestamp;
     }
 }

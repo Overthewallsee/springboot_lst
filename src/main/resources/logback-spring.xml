@@ -2,8 +2,10 @@
 <configuration>
     <!-- 控制台输出 -->
     <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
-        <encoder>
-            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        <encoder class="ch.qos.logback.core.encoder.LayoutWrappingEncoder">
+            <layout class="ch.qos.logback.classic.PatternLayout">
+                <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+            </layout>
             <charset>UTF-8</charset>
         </encoder>
     </appender>
@@ -19,20 +21,22 @@
             <maxHistory>30</maxHistory>
             <totalSizeCap>3GB</totalSizeCap>
         </rollingPolicy>
-        <encoder>
-            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        <encoder class="ch.qos.logback.core.encoder.LayoutWrappingEncoder">
+            <layout class="ch.qos.logback.classic.PatternLayout">
+                <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+            </layout>
             <charset>UTF-8</charset>
         </encoder>
     </appender>
 
     <!-- 根日志级别设置为DEBUG -->
-    <root level="DEBUG">
+    <root level="info">
         <appender-ref ref="CONSOLE"/>
         <appender-ref ref="FILE"/>
     </root>
 
     <!-- 设置特定包的日志级别 -->
-    <logger name="com.lstproject" level="DEBUG" additivity="false">
+    <logger name="com.lstproject" level="debug" additivity="false">
         <appender-ref ref="CONSOLE"/>
         <appender-ref ref="FILE"/>
     </logger>
@@ -50,7 +54,7 @@
     </logger>
     
     <!-- 设置Spring Security日志级别 -->
-    <logger name="org.springframework.security" level="DEBUG" additivity="false">
+    <logger name="org.springframework.security" level="debug" additivity="false">
         <appender-ref ref="CONSOLE"/>
         <appender-ref ref="FILE"/>
     </logger>

@@ -51,6 +51,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 System.out.println("Unable to get JWT Token from query parameter");
             }
         }
+        // Also check for token in websocket handshake attributes
+        else if (request.getAttribute("token") != null) {
+            jwtToken = (String) request.getAttribute("token");
+            try {
+                username = jwtUtil.extractUsername(jwtToken);
+            } catch (Exception e) {
+                System.out.println("Unable to get JWT Token from websocket handshake attributes");
+            }
+        }
 
         // Validate Token
         if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {

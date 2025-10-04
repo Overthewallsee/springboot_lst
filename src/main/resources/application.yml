@@ -66,3 +66,6 @@ logging:
     org.springframework: INFO
     org.springframework.security: DEBUG
     org.hibernate: INFO
+  charset:
+    console: UTF-8
+    file: UTF-8

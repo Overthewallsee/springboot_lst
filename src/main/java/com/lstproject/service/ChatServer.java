@@ -72,7 +72,7 @@ public class ChatServer {
 //            broadcastMessageToRoom(roomId, chatMessage);
 
             // 同时通过WebSocket广播消息
-            ChatWebSocketHandler.broadcastMessage(roomId + ": " + chatMessage);
+            ChatWebSocketHandler.broadcastMessage(roomId , chatMessage);
         }
     }
 

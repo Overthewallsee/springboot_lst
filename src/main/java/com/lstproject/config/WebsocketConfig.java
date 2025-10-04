@@ -1,15 +1,14 @@
 package com.lstproject.config;
 
 import com.lstproject.interceptor.ChatNameWebSocketHandler;
-import com.lstproject.interceptor.MyWebSocketHandler;
-import org.springframework.context.annotation.Bean;
+import com.lstproject.interceptor.WebSocketAuthInterceptor;
+import com.lstproject.service.ChatWebSocketHandler;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.socket.config.annotation.EnableWebSocket;
 import org.springframework.web.socket.config.annotation.WebSocketConfigurer;
 import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry;
-
-import com.lstproject.service.ChatWebSocketHandler;
-import org.springframework.web.socket.server.standard.ServerEndpointExporter;
+import org.springframework.web.socket.server.support.HttpSessionHandshakeInterceptor;
 
 @Configuration
 @EnableWebSocket
@@ -25,9 +24,15 @@ public class WebsocketConfig implements WebSocketConfigurer {
 //                .setAllowedOrigins("*");
 //    }
 
+    @Autowired
+    private WebSocketAuthInterceptor webSocketAuthInterceptor;
     @Override
     public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
-        registry.addHandler(new ChatNameWebSocketHandler(), "/lst/ws/chat/{roomId}").setAllowedOrigins("*");
+        registry.addHandler(new ChatWebSocketHandler(), "/ws/chat/{roomId}")
+                .addInterceptors(webSocketAuthInterceptor)
+                .setAllowedOrigins("*");
+//                .setAllowedOriginPatterns("*") // 根据需求配置允许的源
+//                .withSockJS(); // 如果需要兼容不支持WebSocket的浏览器
 //        registry.addHandler(new ChatWebSocketHandler(), "/ws-with-sockjs").setAllowedOrigins("*").withSockJS();
     }
 }

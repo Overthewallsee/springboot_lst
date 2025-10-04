@@ -19,6 +19,12 @@ public class ChatNameWebSocketHandler extends TextWebSocketHandler {
     public void afterConnectionEstablished(WebSocketSession session) throws Exception {
         sessions.add(session);
         System.out.println("WebSocket connection established: " + session.getId());
+        
+        // 发送连接成功消息
+        ChatMessage welcomeMsg = new ChatMessage();
+        welcomeMsg.setMessage("Connected to WebSocket successfully");
+        welcomeMsg.setType(ChatMessage.MessageType.CHAT);
+        session.sendMessage(new TextMessage(objectMapper.writeValueAsString(welcomeMsg)));
     }
 
     @Override
@@ -26,13 +32,24 @@ public class ChatNameWebSocketHandler extends TextWebSocketHandler {
         String payload = message.getPayload();
         System.out.println("Received message: " + payload);
 
-        // 解析消息
-        ChatMessage chatMessage = objectMapper.readValue(payload, ChatMessage.class);
+        try {
+            // 解析消息
+            ChatMessage chatMessage = objectMapper.readValue(payload, ChatMessage.class);
 
-        // 广播消息给所有连接的客户端
-        for (WebSocketSession webSocketSession : sessions) {
-            if (webSocketSession.isOpen()) {
-                webSocketSession.sendMessage(new TextMessage(objectMapper.writeValueAsString(chatMessage)));
+            // 广播消息给所有连接的客户端
+            for (WebSocketSession webSocketSession : sessions) {
+                if (webSocketSession.isOpen()) {
+                    chatMessage.setUserName(chatMessage.getSender());
+                    chatMessage.setTimestamp(System.currentTimeMillis());
+                    webSocketSession.sendMessage(new TextMessage(objectMapper.writeValueAsString(chatMessage)));
+                }
+            }
+        } catch (Exception e) {
+            // 如果不是ChatMessage格式，直接广播原始消息
+            for (WebSocketSession webSocketSession : sessions) {
+                if (webSocketSession.isOpen()) {
+                    webSocketSession.sendMessage(message);
+                }
             }
         }
     }
@@ -40,12 +57,25 @@ public class ChatNameWebSocketHandler extends TextWebSocketHandler {
     @Override
     public void afterConnectionClosed(WebSocketSession session, CloseStatus status) throws Exception {
         sessions.remove(session);
-        System.out.println("WebSocket connection closed: " + session.getId());
+        System.out.println("WebSocket connection closed: " + session.getId() + ", status: " + status);
     }
 
     @Override
     public void handleTransportError(WebSocketSession session, Throwable exception) throws Exception {
         System.err.println("WebSocket transport error: " + exception.getMessage());
+        System.err.println("Exception details: " + exception);
+        exception.printStackTrace();
         sessions.remove(session);
+        // 尝试关闭会话
+        try {
+            session.close(CloseStatus.SERVER_ERROR);
+        } catch (Exception e) {
+            // 忽略关闭异常
+        }
+    }
+    
+    @Override
+    public boolean supportsPartialMessages() {
+        return false;
     }
 }
