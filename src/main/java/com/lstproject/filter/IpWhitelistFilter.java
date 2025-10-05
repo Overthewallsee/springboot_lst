@@ -16,6 +16,7 @@ import java.io.IOException;
 @RequiredArgsConstructor
 @Slf4j
 public class IpWhitelistFilter extends OncePerRequestFilter {
+    
     private final IpWhitelistService ipWhitelistService;
     
     @Override
@@ -25,10 +26,17 @@ public class IpWhitelistFilter extends OncePerRequestFilter {
         String clientIp = getClientIpAddress(request);
         
         // 检查IP是否在白名单中
-        if (!ipWhitelistService.isIpWhitelisted(clientIp)) {
-            log.warn("Blocked request from non-whitelisted IP: {}", clientIp);
-            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
-            response.getWriter().write("Access denied: IP not whitelisted");
+        try {
+            if (!ipWhitelistService.isIpWhitelisted(clientIp)) {
+                log.warn("Blocked request from non-whitelisted IP: {}", clientIp);
+                response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                response.getWriter().write("Access denied: IP not whitelisted");
+                return;
+            }
+        } catch (Exception e) {
+            log.error("Error checking IP whitelist for IP: {}", clientIp, e);
+            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            response.getWriter().write("Internal server error");
             return;
         }
         

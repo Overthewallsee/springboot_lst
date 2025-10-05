@@ -154,4 +154,9 @@ public class ChatServer {
         // 通过Kafka发送消息
         sendChatMessage(message, "default");
     }
+    
+    // 获取所有聊天室ID
+    public static Set<String> getAllChatRoomIds() {
+        return chatRooms.keySet();
+    }
 }

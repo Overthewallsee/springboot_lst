@@ -6,6 +6,7 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 public class ChatRedisService {
@@ -116,5 +117,19 @@ public class ChatRedisService {
         // 删除聊天室用户列表
         String usersKey = CHAT_ROOM_USERS_PREFIX + roomId;
         redisTemplate.delete(usersKey);
+    }
+    
+    /**
+     * 获取Redis中所有聊天室ID
+     * @return 聊天室ID集合
+     */
+    public Set<String> getAllChatRoomIdsFromRedis() {
+        Set<String> keys = redisTemplate.keys(CHAT_ROOM_PREFIX + "*");
+        if (keys != null) {
+            return keys.stream()
+                    .map(key -> key.substring(CHAT_ROOM_PREFIX.length()))
+                    .collect(Collectors.toSet());
+        }
+        return Set.of();
     }
 }

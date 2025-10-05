@@ -36,7 +36,7 @@
     </root>
 
     <!-- 设置特定包的日志级别 -->
-    <logger name="com.lstproject" level="debug" additivity="false">
+    <logger name="com.lstproject" level="info" additivity="false">
         <appender-ref ref="CONSOLE"/>
         <appender-ref ref="FILE"/>
     </logger>
@@ -54,7 +54,7 @@
     </logger>
     
     <!-- 设置Spring Security日志级别 -->
-    <logger name="org.springframework.security" level="debug" additivity="false">
+    <logger name="org.springframework.security" level="info" additivity="false">
         <appender-ref ref="CONSOLE"/>
         <appender-ref ref="FILE"/>
     </logger>
