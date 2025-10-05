@@ -160,8 +160,10 @@ public class ChatWebSocketHandler implements WebSocketHandler {
      * @param message 消息内容
      */
     private void handleLeaveMessage(WebSocketSession session, JSONObject message) throws IOException {
-        String username = message.getString("username");
-        String roomId = message.getString("roomId");
+
+        String roomId = getRoomId(session);
+        String username = session.getPrincipal().getName();
+
         
 //        // 移除用户会话关联
 //        userSessions.remove(username);
