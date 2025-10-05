@@ -97,6 +97,8 @@ public class AuthService {
         response.setSuccess(true);
         response.setMessage("Registration successful");
         response.setToken(token);
+        UserDTO userDTO = UserMapper.INSTANCE.toDTO(user);
+        response.setUser(userDTO);
 
         return response;
     }
