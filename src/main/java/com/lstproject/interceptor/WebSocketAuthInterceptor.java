@@ -12,6 +12,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 import org.springframework.web.socket.WebSocketHandler;
 import org.springframework.web.socket.server.HandshakeInterceptor;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -37,18 +38,9 @@ public class WebSocketAuthInterceptor implements HandshakeInterceptor {
         String token = UriComponentsBuilder.fromUri(uri).build().getQueryParams().getFirst("token");
         String username = tokenProvider.extractUsername(token);
         // Validate Token
-        if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-            UserDetails userDetails = this.userService.loadUserByUsername(username);
-
-            // if token is valid configure Spring Security to manually set authentication
-            if (tokenProvider.validateToken(token, userDetails.getUsername())) {
-                UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken =
-                        new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
-//                usernamePasswordAuthenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                // After setting the Authentication in the context, we specify that the current user is authenticated.
-                SecurityContextHolder.getContext().setAuthentication(usernamePasswordAuthenticationToken);
-                attributes.put("user", usernamePasswordAuthenticationToken.getPrincipal());
-            }
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (null != username && authentication != null) {
+            return username.equals(authentication.getName());
         }
 //        if (token != null && tokenProvider.validateToken(token)) {
 //            // 解析token获取用户信息
@@ -61,7 +53,7 @@ public class WebSocketAuthInterceptor implements HandshakeInterceptor {
 //        }
         
         // 认证失败，拒绝握手
-        return true;
+        return false;
     }
 
     @Override

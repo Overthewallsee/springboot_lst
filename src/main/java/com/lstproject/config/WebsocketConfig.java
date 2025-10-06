@@ -29,8 +29,8 @@ public class WebsocketConfig implements WebSocketConfigurer {
     @Override
     public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
         registry.addHandler(new ChatWebSocketHandler(), "/ws/chat/{roomId}")
-                .addInterceptors(webSocketAuthInterceptor)
-                .setAllowedOrigins("*");
+                .addInterceptors(webSocketAuthInterceptor);
+//                .setAllowedOrigins("*");
 //                .setAllowedOriginPatterns("*") // 根据需求配置允许的源
 //                .withSockJS(); // 如果需要兼容不支持WebSocket的浏览器
 //        registry.addHandler(new ChatWebSocketHandler(), "/ws-with-sockjs").setAllowedOrigins("*").withSockJS();
