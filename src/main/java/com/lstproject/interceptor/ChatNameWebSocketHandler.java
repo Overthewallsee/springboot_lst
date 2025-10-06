@@ -2,6 +2,8 @@ package com.lstproject.interceptor;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.lstproject.dto.ChatMessage;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
@@ -12,13 +14,16 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 public class ChatNameWebSocketHandler extends TextWebSocketHandler {
 
+    private static final Logger logger = LoggerFactory.getLogger(ChatNameWebSocketHandler.class);
+
+
     private final List<WebSocketSession> sessions = new CopyOnWriteArrayList<>();
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Override
     public void afterConnectionEstablished(WebSocketSession session) throws Exception {
         sessions.add(session);
-        System.out.println("WebSocket connection established: " + session.getId());
+        logger.info("WebSocket connection established: " + session.getId());
         
         // 发送连接成功消息
         ChatMessage welcomeMsg = new ChatMessage();
@@ -30,7 +35,7 @@ public class ChatNameWebSocketHandler extends TextWebSocketHandler {
     @Override
     protected void handleTextMessage(WebSocketSession session, TextMessage message) throws Exception {
         String payload = message.getPayload();
-        System.out.println("Received message: " + payload);
+        logger.info("Received message: " + payload);
 
         try {
             // 解析消息
@@ -57,7 +62,7 @@ public class ChatNameWebSocketHandler extends TextWebSocketHandler {
     @Override
     public void afterConnectionClosed(WebSocketSession session, CloseStatus status) throws Exception {
         sessions.remove(session);
-        System.out.println("WebSocket connection closed: " + session.getId() + ", status: " + status);
+        logger.info("WebSocket connection closed: " + session.getId() + ", status: " + status);
     }
 
     @Override

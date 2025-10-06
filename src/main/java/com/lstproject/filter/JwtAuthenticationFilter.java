@@ -1,6 +1,7 @@
 package com.lstproject.filter;
 
 import com.lstproject.service.UserService;
+
 import com.lstproject.util.JwtUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -39,7 +40,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             try {
                 username = jwtUtil.extractUsername(jwtToken);
             } catch (Exception e) {
-                System.out.println("Unable to get JWT Token from Authorization header");
+                logger.error("Unable to get JWT Token from Authorization header");
             }
         } 
         // If no token in header, check query parameter (for WebSocket)
@@ -48,7 +49,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             try {
                 username = jwtUtil.extractUsername(jwtToken);
             } catch (Exception e) {
-                System.out.println("Unable to get JWT Token from query parameter");
+                logger.error("Unable to get JWT Token from query parameter");
             }
         }
         // Also check for token in websocket handshake attributes
@@ -57,7 +58,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             try {
                 username = jwtUtil.extractUsername(jwtToken);
             } catch (Exception e) {
-                System.out.println("Unable to get JWT Token from websocket handshake attributes");
+                logger.error("Unable to get JWT Token from websocket handshake attributes");
             }
         }
 
@@ -67,7 +68,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
             // if token is valid configure Spring Security to manually set authentication
             if (jwtUtil.validateToken(jwtToken, userDetails.getUsername())) {
-                UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken = 
+                UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken =
                     new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
                 usernamePasswordAuthenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                 // After setting the Authentication in the context, we specify that the current user is authenticated.

@@ -3,6 +3,8 @@ package com.lstproject.config;
 import com.lstproject.entity.IpWhitelist;
 import com.lstproject.repository.IpWhitelistRepository;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 
@@ -11,7 +13,8 @@ import java.time.LocalDateTime;
 @Component
 @RequiredArgsConstructor
 public class DataInitializer implements CommandLineRunner {
-    
+    private static final Logger logger = LoggerFactory.getLogger(DataInitializer.class);
+
     private final IpWhitelistRepository ipWhitelistRepository;
     
     @Override
@@ -25,8 +28,8 @@ public class DataInitializer implements CommandLineRunner {
             localIp.setCreatedAt(LocalDateTime.now());
             localIp.setActive(true);
             ipWhitelistRepository.save(localIp);
-            
-            System.out.println("已添加本地IP 127.0.0.1 到白名单");
+
+            logger.info("已添加本地IP 127.0.0.1 到白名单");
         }
         
         // 检查是否已存在localhost IP白名单记录
@@ -38,8 +41,8 @@ public class DataInitializer implements CommandLineRunner {
             localIp.setCreatedAt(LocalDateTime.now());
             localIp.setActive(true);
             ipWhitelistRepository.save(localIp);
-            
-            System.out.println("已添加本地IP 0:0:0:0:0:0:0:1 到白名单");
+
+            logger.info("已添加本地IP 0:0:0:0:0:0:0:1 到白名单");
         }
     }
 }

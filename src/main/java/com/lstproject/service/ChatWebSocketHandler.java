@@ -1,31 +1,21 @@
 package com.lstproject.service;
 
-import java.io.IOException;
-import java.rmi.RemoteException;
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CopyOnWriteArraySet;
-import java.util.stream.Collectors;
-
 import com.alibaba.fastjson.JSONObject;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.TextNode;
-import com.fasterxml.jackson.databind.util.JSONPObject;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.lstproject.dto.UserDTO;
-import org.slf4j.ILoggerFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.web.socket.CloseStatus;
-import org.springframework.web.socket.TextMessage;
-import org.springframework.web.socket.WebSocketHandler;
-import org.springframework.web.socket.WebSocketMessage;
-import org.springframework.web.socket.WebSocketSession;
+import org.springframework.web.socket.*;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import org.springframework.web.socket.adapter.standard.StandardWebSocketSession;
+import java.io.IOException;
+import java.rmi.RemoteException;
+import java.util.Collection;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArraySet;
 
 public class ChatWebSocketHandler implements WebSocketHandler {
 
@@ -48,7 +38,7 @@ public class ChatWebSocketHandler implements WebSocketHandler {
     public void afterConnectionEstablished(WebSocketSession session) throws Exception {
         // 添加新连接到会话列表
         sessions.add(session);
-        System.out.println("新的WebSocket连接建立: " + session.getId());
+        logger.info("新的WebSocket连接建立: " + session.getId());
         String name = session.getPrincipal().getName();
         String roomId = getRoomId(session);
         userSessions.computeIfAbsent(roomId, k -> new ConcurrentHashMap<>()).put(session.getId(), session);
@@ -73,7 +63,7 @@ public class ChatWebSocketHandler implements WebSocketHandler {
     @Override
     public void handleMessage(WebSocketSession session, WebSocketMessage<?> message) throws Exception {
         String payload = (String) message.getPayload();
-        System.out.println("收到消息: " + payload);
+        logger.info("收到消息: " + payload);
         
         try {
             // 尝试解析JSON消息
@@ -190,7 +180,7 @@ public class ChatWebSocketHandler implements WebSocketHandler {
         // 移除关闭的连接
         sessions.remove(session);
         removeUserSession(session);
-        System.out.println("WebSocket连接关闭: " + session.getId() + ", 状态: " + closeStatus);
+        logger.info("WebSocket连接关闭: " + session.getId() + ", 状态: " + closeStatus);
     }
     
     /**

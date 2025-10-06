@@ -5,7 +5,6 @@ import com.lstproject.dto.LoginRequest;
 import com.lstproject.dto.LoginResponse;
 import com.lstproject.dto.UserDTO;
 import com.lstproject.entity.User;
-import com.lstproject.exception.RateLimitExceededException;
 import com.lstproject.repository.UserRepository;
 import com.lstproject.util.CryptoJsAesDecryptor;
 import com.lstproject.util.JwtUtil;
@@ -13,8 +12,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+
 import java.time.LocalDateTime;
-import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor

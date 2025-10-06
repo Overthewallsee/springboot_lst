@@ -1,6 +1,7 @@
 package com.lstproject.interceptor;
 
-import org.springframework.stereotype.Component;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
@@ -11,26 +12,26 @@ import java.util.concurrent.ConcurrentHashMap;
 
 //@Component
 public class MyWebSocketHandler extends TextWebSocketHandler {
-  
+    private static final Logger logger = LoggerFactory.getLogger(MyWebSocketHandler.class);
     private static final ConcurrentHashMap<String, WebSocketSession> sessions = new ConcurrentHashMap<>();
   
     @Override  
     public void afterConnectionEstablished(WebSocketSession session) throws Exception {
 
-        sessions.put(session.getId(), session);  
-        System.out.println("WebSocket session established: " + session.getId());  
+        sessions.put(session.getId(), session);
+        logger.info("WebSocket session established: " + session.getId());
     }  
   
     @Override  
     protected void handleTextMessage(WebSocketSession session, TextMessage message) throws Exception {
         // 处理接收到的消息  
-        System.out.println("Received message: " + message.getPayload());  
+        logger.info("Received message: " + message.getPayload());
     }  
   
     @Override  
     public void afterConnectionClosed(WebSocketSession session, CloseStatus status) throws Exception {
-        sessions.remove(session.getId());  
-        System.out.println("WebSocket session closed: " + session.getId());  
+        sessions.remove(session.getId());
+        logger.info("WebSocket session closed: " + session.getId());
     }  
   
     // 发送消息到指定客户端  

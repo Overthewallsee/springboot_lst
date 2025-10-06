@@ -1,7 +1,6 @@
 package com.lstproject.controller;
 
 import com.lstproject.dto.*;
-import com.lstproject.service.AuthService;
 import com.lstproject.service.ChatService;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
