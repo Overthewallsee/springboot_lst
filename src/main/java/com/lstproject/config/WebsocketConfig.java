@@ -24,9 +24,12 @@ public class WebsocketConfig implements WebSocketConfigurer {
 
     @Autowired
     private WebSocketAuthInterceptor webSocketAuthInterceptor;
+
+    @Autowired
+    private ChatWebSocketHandler chatWebSocketHandler;
     @Override
     public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
-        registry.addHandler(new ChatWebSocketHandler(), "/ws/chat/{roomId}")
+        registry.addHandler(chatWebSocketHandler, "/ws/chat/{roomId}")
                 .addInterceptors(webSocketAuthInterceptor);
 //                .setAllowedOrigins("*");
 //                .setAllowedOriginPatterns("*") // 根据需求配置允许的源

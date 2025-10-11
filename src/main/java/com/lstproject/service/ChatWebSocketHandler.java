@@ -5,8 +5,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.lstproject.dto.UserDTO;
+import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.kafka.annotation.KafkaListener;
+import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.stereotype.Component;
 import org.springframework.web.socket.*;
 
 import java.io.IOException;
@@ -17,6 +22,8 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArraySet;
 
+@Component
+@RequiredArgsConstructor
 public class ChatWebSocketHandler implements WebSocketHandler {
 
     private static final Logger logger = LoggerFactory.getLogger(ChatWebSocketHandler.class);
@@ -33,6 +40,11 @@ public class ChatWebSocketHandler implements WebSocketHandler {
 
     // JSON处理工具
     private static final ObjectMapper objectMapper = new ObjectMapper();
+
+    private static final String CHAT_TOPIC = "chat-messages";
+
+    @Autowired
+    private KafkaTemplate<String, String> kafkaTemplate;
     
     @Override
     public void afterConnectionEstablished(WebSocketSession session) throws Exception {
@@ -69,7 +81,6 @@ public class ChatWebSocketHandler implements WebSocketHandler {
             // 尝试解析JSON消息
             JSONObject jsonObject = JSONObject.parseObject(payload);
             String type = jsonObject.getString("type");
-            String roomId = userSessionsRoom.get(session.getId());
             switch (type) {
                 case "join":
                     handleJoinMessage(session, jsonObject);
@@ -82,12 +93,39 @@ public class ChatWebSocketHandler implements WebSocketHandler {
                     break;
                 default:
                     // 普通文本消息，直接广播
-                    broadcastMessage(roomId, payload);
+                    handleDefauleMessage(session, jsonObject);
             }
         } catch (Exception e) {
             // 非JSON消息，直接广播
             logger.error("无法解析JSON消息: " + e.getMessage());
 //            broadcastMessage(roomId, payload);
+        }
+    }
+
+    @KafkaListener(topics = CHAT_TOPIC)
+    public void listenChatMessages(String message) {
+        // 解析消息
+        String[] parts = message.split(" \\|=\\| ", 3);
+        if (parts.length == 3) {
+            String roomId = parts[0];
+            String id = parts[1];
+            String chatMessage = parts[2];
+
+            // 广播消息给房间内的所有客户端
+//            broadcastMessageToRoom(roomId, chatMessage);
+
+            // 同时通过WebSocket广播消息
+            broadcastMessage(roomId, id, chatMessage);
+        }
+    }
+
+    public void sendChatMessage(String roomId, String  id, String message) {
+        // 将消息发送到Kafka主题
+        String kafkaMessage = roomId + " |=| " + id + " |=| " + message;
+        if (kafkaTemplate != null) {
+            kafkaTemplate.send(CHAT_TOPIC, kafkaMessage);
+        } else {
+            logger.error("KafkaTemplate is not initialized");
         }
     }
     
@@ -116,8 +154,35 @@ public class ChatWebSocketHandler implements WebSocketHandler {
         broadcast.put("roomId", roomId);
         ObjectNode welcomeMessage1 = objectMapper.createObjectNode();
         welcomeMessage1.put("name", username);
-        broadcast.put("user", welcomeMessage1);
-        broadcastMessage(roomId, broadcast.toString());
+        broadcast.set("user", welcomeMessage1);
+        sendChatMessage(roomId, null, broadcast.toString());
+//        broadcastMessage(roomId, broadcast.toString());
+    }
+
+    /**
+     * 默认处理用户发送的聊天消息
+     * @param session
+     * @param message
+     * @throws IOException
+     */
+    private void handleDefauleMessage(WebSocketSession session, JSONObject message) throws IOException {
+        if (session == null || session.getPrincipal() == null || session.getPrincipal().getName() == null) {
+            throw  new RemoteException("用户未登录");
+        }
+        String username = session.getPrincipal().getName();
+        String roomId = getRoomId(session);
+        String content = message.getJSONObject("message").getString("content");
+        // 广播聊天消息
+        ObjectNode broadcast = objectMapper.createObjectNode();
+        ObjectNode messageNode = objectMapper.createObjectNode();
+        broadcast.put("type", "chat");
+        messageNode.put("username", username);
+        messageNode.put("roomId", roomId);
+        messageNode.put("content", content);
+        messageNode.put("timestamp", System.currentTimeMillis());
+        broadcast.set("message", messageNode);
+        sendChatMessage(roomId, null, broadcast.toString());
+//        broadcastMessage(roomId, broadcast.toString());
     }
     
     /**
@@ -140,8 +205,9 @@ public class ChatWebSocketHandler implements WebSocketHandler {
         messageNode.put("roomId", roomId);
         messageNode.put("content", content);
         messageNode.put("timestamp", System.currentTimeMillis());
-        broadcast.put("message", messageNode);
-        broadcastMessage(roomId, broadcast.toString());
+        broadcast.set("message", messageNode);
+        sendChatMessage(roomId, null, broadcast.toString());
+//        broadcastMessage(roomId, broadcast.toString());
     }
     
     /**
@@ -153,18 +219,15 @@ public class ChatWebSocketHandler implements WebSocketHandler {
 
         String roomId = getRoomId(session);
         String username = session.getPrincipal().getName();
-
-        
 //        // 移除用户会话关联
 //        userSessions.remove(username);
-
-        
         // 通知其他用户
         ObjectNode broadcast = objectMapper.createObjectNode();
         broadcast.put("type", "leave");
         broadcast.put("username", username);
         broadcast.put("roomId", roomId);
-        broadcastMessageToOthers(session, broadcast.toString());
+//        broadcastMessageToOthers(session, broadcast.toString());
+        sendChatMessage(roomId, session.getId(), broadcast.toString());
         removeUserSession(session);
     }
     
@@ -210,17 +273,15 @@ public class ChatWebSocketHandler implements WebSocketHandler {
      * 广播消息给所有连接的客户端
      * @param message 要发送的消息
      */
-    public static void broadcastMessage(String roomId, String message) {
-        if (userSessions.containsKey(roomId)) {
-            Map<String, WebSocketSession> socketSessionMap = userSessions.get(roomId);
-            Collection<WebSocketSession> values = socketSessionMap.values();
-            for (WebSocketSession session : values) {
-                if (session.isOpen()) {
-                    try {
-                        session.sendMessage(new TextMessage(message));
-                    } catch (IOException e) {
-                        System.err.println("发送消息失败: " + e.getMessage());
-                    }
+    public void broadcastMessage(String roomId, String exludeid, String message) {
+        Map<String, WebSocketSession> webSocketSessionMap = userSessions.get(roomId);
+        Collection<WebSocketSession> values = webSocketSessionMap.values();
+        for (WebSocketSession session : values) {
+            if (session.isOpen() && !session.getId().equals(exludeid)) {
+                try {
+                    session.sendMessage(new TextMessage(message));
+                } catch (IOException e) {
+                    System.err.println("发送消息失败: " + e.getMessage());
                 }
             }
         }

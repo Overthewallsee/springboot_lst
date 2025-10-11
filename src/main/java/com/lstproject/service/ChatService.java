@@ -53,7 +53,7 @@ public class ChatService {
             message.put("username", username);
             message.put("roomId", roomId);
             message.put("message", username + " 加入了聊天室");
-            ChatWebSocketHandler.broadcastMessage(roomId, message.toString());
+//            broadcastMessage(roomId, message.toString());
         } catch (Exception e) {
             System.err.println("发送WebSocket消息失败: " + e.getMessage());
         }
@@ -94,7 +94,7 @@ public class ChatService {
             message.put("username", username);
             message.put("roomId", roomId);
             message.put("message", username + " 离开了聊天室");
-            ChatWebSocketHandler.broadcastMessage(roomId, message.toString());
+//            ChatWebSocketHandler.broadcastMessage(roomId, message.toString());
         } catch (Exception e) {
             System.err.println("发送WebSocket消息失败: " + e.getMessage());
         }
@@ -139,7 +139,7 @@ public class ChatService {
             message.put("roomId", chatMessage.getRoomId());
             message.put("content", chatMessage.getMessage());
             message.put("timestamp", System.currentTimeMillis());
-            ChatWebSocketHandler.broadcastMessage(chatMessage.getRoomId(), message.toString());
+//            ChatWebSocketHandler.broadcastMessage(chatMessage.getRoomId(), message.toString());
         } catch (Exception e) {
             System.err.println("发送WebSocket消息失败: " + e.getMessage());
         }
