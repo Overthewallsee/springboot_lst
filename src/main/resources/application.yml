@@ -12,7 +12,7 @@ spring:
   datasource:
     url: jdbc:mysql://81.68.197.173:3306/lst?useSSL=true&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
     username: root
-    password: lst@1234
+    password: ********
     driver-class-name: com.mysql.cj.jdbc.Driver
     hikari:
       # 连接池名称
@@ -56,7 +56,7 @@ spring:
     host: 81.68.197.173
     port: 6379
     database: 0
-    password: lst@1234
+    password: ********
 
   kafka:
     bootstrap-servers: 81.68.197.173:9092
@@ -87,6 +87,10 @@ Crypto:
   secretKey: LST_LOGIN_SECRET_KEY_2024
 socket:
   port: 8889
+
+netty:
+  websocket:
+    port: 8088
 
 # Logging configuration
 logging:
